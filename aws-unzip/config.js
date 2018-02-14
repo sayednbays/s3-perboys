@@ -1,6 +1,6 @@
 module.exports = {
     S3: {
-        bucketName: 's3access-bigdata',
+        bucketName: 'orchestrators',
         region: 'us-east-2'
     }
 }

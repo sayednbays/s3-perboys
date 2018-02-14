@@ -8,6 +8,9 @@
 		},
 		{
 			"path": "aws-unzip"
+		},
+		{
+			"path": "aws-unzip-console"
 		}
 	],
 	"settings": {}
