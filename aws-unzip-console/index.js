@@ -44,6 +44,7 @@ rl.on('line', (line) => {
         }).then(data => {
             // print the success or failure result
             process.stdout.write(util.format(data) + os.EOL);
+            rl.close();
         })
             .catch((error) => {
                 process.stderr.write('unzip failure' + os.EOL);
