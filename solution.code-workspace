@@ -5,6 +5,9 @@
 		},
 		{
 			"path": "aws-serverless"
+		},
+		{
+			"path": "aws-unzip"
 		}
 	],
 	"settings": {}
