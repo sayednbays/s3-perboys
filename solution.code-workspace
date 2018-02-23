@@ -1,19 +1,19 @@
 {
 	"folders": [
 		{
-			"path": "frontend"
-		},
-		{
-			"path": "aws-serverless"
-		},
-		{
-			"path": "aws-unzip"
-		},
-		{
 			"path": "aws-unzip-console"
 		},
 		{
 			"path": "configurations"
+		},
+		{
+			"path": "aws-s3access-frontend"
+		},
+		{
+			"path": "aws-s3access-lambda"
+		},
+		{
+			"path": "aws-unzip-lambda"
 		}
 	],
 	"settings": {}
