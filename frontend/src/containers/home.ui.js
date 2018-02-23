@@ -2,20 +2,23 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux'
 import {
     Typography, Input, Button, Dialog, DialogActions, DialogContent, DialogTitle,
-    Divider, IconButton, AppBar, Toolbar, Grid, LinearProgress,Tooltip
+    Divider, AppBar, Toolbar, Grid, LinearProgress, Tooltip
 } from 'material-ui';
 import { GridListTile, GridList, GridListTileBar } from 'material-ui/GridList';
-import { Folder, Description, NavigateNext, FileUpload, Remove } from 'material-ui-icons'
+import { Folder, Description, FileUpload, Remove, CheckCircle, FileDownload } from 'material-ui-icons'
 import { authActions, fileSystemActions } from '../actions';
+import { MultipleFileInput } from '../components'
 import './home.ui.css';
 
 class HomeContainer extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            uploadDialogOpen: false, uploadFile: null,
-            folderCreateDialogOpen: false, folderName: '', error: null,
-            selectedFolderOrFile: null
+            uploadDialogOpen: false, uploadFiles: [],
+            folderCreateDialogOpen: false,
+            folderName: '', error: null,
+            selectedPaths: [],
+            overOnPath: null
         };
     }
     componentWillMount() {
@@ -26,7 +29,7 @@ class HomeContainer extends Component {
         const { dispatch } = this.props;
         await dispatch(authActions.logout());
     }
-    navigateByFolderOrFilePath(type, path) {
+    navigateByPath(type, path) {
         const { dispatch } = this.props;
         if (type === 'folder') {
             dispatch(fileSystemActions.listContentsUnderPath(path));
@@ -34,11 +37,11 @@ class HomeContainer extends Component {
         else if (type === 'file') {
             dispatch(fileSystemActions.downloadFile(path));
         }
-        this.setState({ selectedFolderOrFile: null });
+        this.setState({ selectedPaths: [] });
     }
     createFolder(path) {
         const { dispatch } = this.props;
-        this.setState({ folderCreateDialogOpen: false, selectedFolderOrFile: null });
+        this.setState({ folderCreateDialogOpen: false, selectedPaths: [] });
 
         const { folderName } = this.state;
         if (!folderName) {
@@ -48,28 +51,35 @@ class HomeContainer extends Component {
         dispatch(fileSystemActions.createFolder(path, folderName));
         this.setState({ error: null, folderName: '' });
     }
-    deleteFolderOrFile() {
+    deleteByPaths(paths) {
         const { dispatch } = this.props;
-        dispatch(fileSystemActions.deleteFolderOrFile(this.state.selectedFolderOrFile));
-        this.setState({ error: null, uploadFile: null });
-        this.setState({ selectedFolderOrFile: null });
+        dispatch(fileSystemActions.deletePaths(paths));
+        this.setState({ error: null, uploadFiles: [] });
+        this.setState({ selectedPaths: [] });
     }
-    uploadFile(path) {
+    uploadFiles(path) {
         const { dispatch } = this.props;
-        this.setState({ uploadDialogOpen: false, selectedFolderOrFile: null });
+        this.setState({ uploadDialogOpen: false, selectedPaths: [] });
 
-        const { uploadFile } = this.state;
-        if (!uploadFile) {
+        const { uploadFiles } = this.state;
+        if (uploadFiles.length === 0) {
             this.setState({ error: 'file is required' });
             return;
         }
-        let freader = new FileReader();
-        freader.onload = (e) => {
-            const fileData = e.target.result;
-            dispatch(fileSystemActions.uploadFile(path, uploadFile.name, fileData));
-            this.setState({ error: null, uploadFile: null });
-        };
-        freader.readAsDataURL(uploadFile);
+
+        dispatch(fileSystemActions.uploadFiles(path, uploadFiles));
+
+    }
+    onPathClicked(path) {
+        const { selectedPaths } = this.state;
+        let newSelectedPaths = [...selectedPaths];
+        if (newSelectedPaths.indexOf(path) === -1) {
+            newSelectedPaths.push(path);
+        }
+        else {
+            newSelectedPaths = newSelectedPaths.filter(item => item !== path);
+        }
+        this.setState({ selectedPaths: newSelectedPaths });
 
     }
     render() {
@@ -108,7 +118,7 @@ class HomeContainer extends Component {
                                     return (
                                         <div key={curItemPath} className='home-breadcrumb-container'>
                                             <Button classes={{ root: 'home-breadcrumb' }}
-                                                disabled={isLastIndex} onClick={() => { this.navigateByFolderOrFilePath('folder', curItemPath) }}>{crumb}</Button>
+                                                disabled={isLastIndex} onClick={() => { this.navigateByPath('folder', curItemPath) }}>{crumb}</Button>
                                             {!isLastIndex && <span style={{ color: 'rgba(0,0,0,0.45)' }}>></span>}
                                         </div>
                                     )
@@ -125,40 +135,62 @@ class HomeContainer extends Component {
                                 <Button style={{ marginRight: 30 }} onClick={() => { this.setState({ uploadDialogOpen: true }); }}
                                     title='Upload' raised color='primary'>
                                     <FileUpload />
-                                    Upload File</Button>
+                                    Upload Files</Button>
+                                <Button style={{ marginRight: 30 }}
+                                    disabled={this.state.selectedPaths.length === 0}
+                                    onClick={() => { this.deleteByPaths(this.state.selectedPaths) }}
+                                    raised color='primary'>
+                                    <FileDownload />
+                                    Download Files</Button>
                                 <Tooltip placement="bottom" title="When remove folder, please make sure folder is empty">
-                                   <div style={{display:'inline-block'}}>
-                                    <Button
-                                        disabled={!this.state.selectedFolderOrFile}
-                                        onClick={() => { this.deleteFolderOrFile() }}
-                                         raised color='accent'>
-                                        <Remove />
-                                        Remove folder/File</Button>
-                                        </div>
+                                    <div style={{ display: 'inline-block' }}>
+                                        <Button
+                                            disabled={this.state.selectedPaths.length === 0}
+                                            onClick={() => { this.deleteByPaths(this.state.selectedPaths) }}
+                                            raised color='accent'>
+                                            <Remove />
+                                            Remove folder/File
+                                           </Button>
+                                    </div>
                                 </Tooltip>
 
                             </div>
                         </Toolbar>
                         <div className='home-grid-list-container'>
-
                             {
-                                (fileSystem.error || this.state.error) && <Typography type="body2" color="error" className='home-account-item'>{fileSystem.error || this.state.error}</Typography>
+                                (fileSystem.error || this.state.error) &&
+                                <Typography type="body2" color="error"
+                                    className='home-account-item'>{fileSystem.error || this.state.error}</Typography>
                             }
-                            <GridList cellHeight={160} className='home-grid-list' spacing={30} cols={4}>
+                            <GridList cellHeight={100} className='home-grid-list' spacing={15} cols={5}>
                                 {contents.map(item => {
                                     let segment = item.path.replace(/\/+$/g, '').split('/');
                                     let name = segment[segment.length - 1];
+                                    let isPathSelected = this.state.selectedPaths.indexOf(item.path) >= 0;
                                     return (
                                         <GridListTile key={item.path} cols={1}>
-                                            <div className={this.state.selectedFolderOrFile === item.path ? 'home-grid-item selected' : 'home-grid-item'}
-                                                onClick={() => { this.setState({ selectedFolderOrFile: item.path }) }}
-                                                onDoubleClick={() => { this.navigateByFolderOrFilePath(item.type, item.path) }}>
+                                            <div className={isPathSelected ? 'home-grid-item selected' : 'home-grid-item'}
+                                                onClick={() => { this.navigateByPath(item.type, item.path) }}
+                                                onMouseEnter={() => this.setState({ overOnPath: item.path })}
+                                                onMouseLeave={() => this.setState({ overOnPath: null })}
+                                            >
                                                 {item.type === 'folder' ? <Folder classes={{ root: 'folder' }} /> : <Description classes={{ root: 'file' }} />}
-                                            </div>
+                                                {(this.state.overOnPath === item.path || isPathSelected) &&
+                                                    <div className='path-select'
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            this.onPathClicked(item.path)
+                                                        }}>
+                                                        <CheckCircle color={isPathSelected ? 'primary' : 'action'}
+                                                            classes={{ colorAction: 'select-action-color' }} />
+                                                    </div>
+                                                }
+                                           
                                             <GridListTileBar
                                                 title={name}
                                                 subtitle={item.size && <span>{Math.round(item.size / 1024) + 'KB'}</span>}
                                             />
+                                             </div>
                                         </GridListTile>
                                     );
                                 })}
@@ -195,13 +227,14 @@ class HomeContainer extends Component {
                     aria-labelledby="confirmation-dialog-title">
                     <DialogTitle id="confirmation-dialog-title">File Upload</DialogTitle>
                     <DialogContent>
-                        <Input type='file' fullWidth onChange={(event) => { this.setState({ uploadFile: event.target.files[0] }) }} />
+                        <MultipleFileInput
+                            onChange={(files) => { this.setState({ uploadFiles: files }) }} />
                     </DialogContent>
                     <DialogActions>
-                        <Button onClick={() => { this.setState({ uploadDialogOpen: false, uploadFile: null }) }} color="default">
+                        <Button onClick={() => { this.setState({ uploadDialogOpen: false, uploadFiles: [] }) }} color="default">
                             Cancel
           </Button>
-                        <Button onClick={() => { this.uploadFile(curPath) }} color="primary">
+                        <Button onClick={() => { this.uploadFiles(curPath) }} color="primary">
                             Ok
           </Button>
                     </DialogActions>

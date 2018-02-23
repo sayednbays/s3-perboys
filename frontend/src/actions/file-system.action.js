@@ -4,7 +4,7 @@ import { awsS3, util } from '../services/index';
 export const ActionTypes = {
     ...StatusActionTypes,
     listContents: 'fileSystem.listContent',
-    reset:'fileSystem.reset'
+    reset: 'fileSystem.reset'
 };
 export function listContentsUnderPath(path) {
     return async (dispatch, getState) => {
@@ -39,12 +39,8 @@ export function downloadFile(path) {
 
             let payload = await awsS3.getObject(path);
             if (payload && payload.data) {
-                const { Body, ContentType } = payload.data;
-                const { data } = Body;
-
-                let segments = path.split('/');
-                let fileName = segments[segments.length - 1];
-                util.saveByteArrayAsFile(data, fileName);
+                const { url } = payload.data;
+                util.downloadFile(url);
 
             }
         }
@@ -76,15 +72,20 @@ export function createFolder(path, folderName) {
         }
     }
 }
-export function deleteFolderOrFile(path) {
+export function deletePaths(paths) {
     return async (dispatch, getState) => {
         try {
+            if (paths.length === 0) return;
             dispatch({ type: ActionTypes.loading, payload: { domain: 'fileSystem' } });
 
-            await awsS3.deleteObject(path);
+            for (let i = 0; i < paths.length; i++) {
+                let path = paths[i];
+                await awsS3.deleteObject(path);
+
+            }
+            let path = paths[0];
             if (!path.endsWith('/'))
                 path += '/';
-
             let segments = path.split('/');
             let parentPath = segments.slice(0, Math.max(segments.length - 2, 0)).join('/') + '/';
             await dispatch(listContentsUnderPath(parentPath));
@@ -100,14 +101,15 @@ export function deleteFolderOrFile(path) {
 }
 
 
-export function uploadFile(path, fileName, file) {
+export function uploadFiles(path, files) {
     return async (dispatch, getState) => {
         try {
             dispatch({ type: ActionTypes.loading, payload: { domain: 'fileSystem' } });
 
-            let key = path + fileName;
-            await awsS3.putObject(key, file);
-
+            for (let i = 0; i < files.length; i++) {
+                let key = path + files[i].name;
+                await awsS3.putObject(key, files[i].data);
+            }
             await dispatch(listContentsUnderPath(path));
         }
         catch (err) {
@@ -121,7 +123,7 @@ export function uploadFile(path, fileName, file) {
 }
 
 export function reset() {
-    return  (dispatch, getState) => {
+    return (dispatch, getState) => {
         dispatch({ type: ActionTypes.reset });
     }
 }

@@ -64,14 +64,23 @@ exports.handler = (event, context, callback) => {
             {
                 const { key } = params;
                 let userKey = userHomeFolderPrefix + key;
-                s3.getObject({
-                    Bucket: Config.S3.bucketName, Key: userKey,
-                }, (err, result) => {
-                    //return  result or error to end user
-                    handleS3Callback(err, result, callback);
-
-                });
+                let options = { Bucket: Config.S3.bucketName, Key: userKey, Expires: 60 };
+                let url = s3.getSignedUrl('getObject', options);
+                let result = { url };
+                handleS3Callback(null, result, callback);
             }
+            break;
+        //download files or folders as zip
+        case 'downloadAsZip':
+            const { keys } = params;
+            let userKey = userHomeFolderPrefix + key;
+            s3.getObject({
+                Bucket: Config.S3.bucketName, Key: userKey,
+            }, (err, result) => {
+                //return  result or error to end user
+                handleS3Callback(err, result, callback);
+
+            });
             break;
         //create folder or upload file
         case 'putObject':
@@ -81,9 +90,9 @@ exports.handler = (event, context, callback) => {
                 //upload file
                 if (body) {
                     //conver the file data (base64 encode from client) to binary
-                    let buf = new Buffer(body.replace(/^data:image\/\w+;base64,/, ""), 'base64');
+                    let buf = new Buffer(body.replace(/^data:\w+\/\w+;base64,/, ""), 'base64');
                     s3.upload({
-                        Bucket: Config.S3.bucketName, Key: userKey, Body: buf,ACL:'bucket-owner-full-control'
+                        Bucket: Config.S3.bucketName, Key: userKey, Body: buf, ACL: 'bucket-owner-full-control'
                     }, (err, result) => {
                         //return  result or error to end user
                         handleS3Callback(err, result, callback);
@@ -93,7 +102,7 @@ exports.handler = (event, context, callback) => {
                 //folder creation
                 else {
                     s3.putObject({
-                        Bucket: Config.S3.bucketName, Key: userKey,ACL:'bucket-owner-full-control'
+                        Bucket: Config.S3.bucketName, Key: userKey, ACL: 'bucket-owner-full-control'
                     }, (err, result) => {
                         //return  result or error to end user
                         handleS3Callback(err, result, callback);
@@ -106,7 +115,7 @@ exports.handler = (event, context, callback) => {
             {
                 const { key } = params;
                 let userKey = userHomeFolderPrefix + key;
-               
+
                 s3.deleteObject({
                     Bucket: Config.S3.bucketName, Key: userKey
                 }, (err, result) => {
@@ -128,8 +137,6 @@ exports.handler = (event, context, callback) => {
 
 };
 
-function checkOrCreateUserHomeFolder() {
-}
 function handleS3Callback(s3Error, s3Result, lambdaCallback) {
     let response = { statusCode: 200, body: null, headers: { "Access-Control-Allow-Origin": "*" } }
 

@@ -44,6 +44,7 @@ rl.on('line', (line) => {
         }).then(data => {
             // print the success or failure result
             process.stdout.write(util.format(data) + os.EOL);
+            //close the read line interface from terminal
             rl.close();
         })
             .catch((error) => {

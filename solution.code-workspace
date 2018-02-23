@@ -11,6 +11,9 @@
 		},
 		{
 			"path": "aws-unzip-console"
+		},
+		{
+			"path": "configurations"
 		}
 	],
 	"settings": {}

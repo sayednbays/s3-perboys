@@ -1,50 +1,32 @@
-import AWS from 'aws-sdk';
 import * as appConfig from '../config'
-import { NetworkError } from './network-error';
 import { httpService } from './index';
 
 export async function listObjects(prefix) {
-    try {
-        let data = await httpService.post(appConfig.S3.apiEndPoint,
-            { operation: 'listObjects', params: { prefix: prefix } });
-        return data;
-    }
-    catch (err) {
-        console.log(err);
-    }
+    let data = await httpService.post(appConfig.S3.apiEndPoint,
+        { operation: 'listObjects', params: { prefix: prefix } });
+    return data;
 
 }
 
 export async function getObject(key) {
-    try {
-        let data = await httpService.post(appConfig.S3.apiEndPoint,
-            { operation: 'getObject', params: { key: key } });
-        return data;
-    }
-    catch (err) {
-        console.log(err);
-    }
-
+    let data = await httpService.post(appConfig.S3.apiEndPoint,
+        { operation: 'getObject', params: { key: key } });
+    return data;
+}
+export async function getObjects(keys) {
+    let data = await httpService.post(appConfig.S3.apiEndPoint,
+        { operation: 'getObjects', params: { keys: keys } });
+    return data;
 }
 export async function putObject(key, body) {
-    try {
-        let data = await httpService.post(appConfig.S3.apiEndPoint,
-            { operation: 'putObject', params: { key: key, body: body } });
-        return data;
-    }
-    catch (err) {
-        console.log(err);
-    }
+    let data = await httpService.post(appConfig.S3.apiEndPoint,
+        { operation: 'putObject', params: { key: key, body: body } });
+    return data;
 }
 
 export async function deleteObject(key) {
-    try {
-        let data = await httpService.post(appConfig.S3.apiEndPoint,
-            { operation: 'deleteObject', params: { key: key } });
-        return data;
-    }
-    catch (err) {
-        console.log(err);
-    }
+    let data = await httpService.post(appConfig.S3.apiEndPoint,
+        { operation: 'deleteObject', params: { key: key } });
+    return data;
 }
 

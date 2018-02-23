@@ -1,1 +1,0 @@
-1 need configure the lambda policy for security
