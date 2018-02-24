@@ -136,12 +136,12 @@ class HomeContainer extends Component {
                                     title='Upload' raised color='primary'>
                                     <FileUpload />
                                     Upload Files</Button>
-                                <Button style={{ marginRight: 30 }}
+                                {/* <Button style={{ marginRight: 30 }}
                                     disabled={this.state.selectedPaths.length === 0}
                                     onClick={() => { this.deleteByPaths(this.state.selectedPaths) }}
                                     raised color='primary'>
                                     <FileDownload />
-                                    Download Files</Button>
+                                    Download Files</Button> */}
                                 <Tooltip placement="bottom" title="When remove folder, please make sure folder is empty">
                                     <div style={{ display: 'inline-block' }}>
                                         <Button
