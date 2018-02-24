@@ -3,12 +3,6 @@
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
-  "dependencies": {
-    "aws-sdk": "^2.173.0",
-    "lodash": "^4.17.4",
-    "node": "^9.3.0"
-  },
-  "devDependencies": {
-    "@types/node": "^8.5.2"
-  }
+  "dependencies": {},
+  "devDependencies": {}
 }
